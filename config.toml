@@ -1,3 +1,6 @@
+# baseURL = "https://NguyenVanKhoaK18.github.io/My-Hugo/"
+# Nếu có custom domain, thay bằng:
+# baseURL = "https://yourdomain.com/"
 baseURL = "https://NguyenVanKhoaK18.github.io/My-Hugo/"
 relativeURLs = true
 canonifyURLs = true
