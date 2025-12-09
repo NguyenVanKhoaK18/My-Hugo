@@ -1,4 +1,4 @@
-baseURL = "https://[GITHUB_USERNAME_CUA_BAN].github.io/[TEN_REPO_CUA_BAN]/"
+baseURL = "https://NguyenVanKhoaK18.github.io/my-sample-site/"
 relativeURLs = true
 canonifyURLs = true
 
