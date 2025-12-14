@@ -6,15 +6,15 @@ chapter: false
 pre: " <b> 3. </b> "
 ---
 
-{{% notice warning %}}  
-⚠️ **Lưu ý:** Các thông tin dưới đây chỉ nhằm mục đích tham khảo, vui lòng **không sao chép nguyên văn** cho bài báo cáo của bạn kể cả warning này.
-{{% /notice %}}
 
-Tại đây sẽ là phần liệt kê, giới thiệu các blogs mà các bạn đã dịch. Ví dụ:
 
-###  [Blog 1 - Getting started with healthcare data lakes: Using microservices](3.1-Blog1/)
-Blog này giới thiệu cách bắt đầu xây dựng data lake trong lĩnh vực y tế bằng cách áp dụng kiến trúc microservices. Bạn sẽ tìm hiểu vì sao data lake quan trọng trong việc lưu trữ và phân tích dữ liệu y tế đa dạng (hồ sơ bệnh án điện tử, dữ liệu xét nghiệm, thiết bị IoT y tế…), cách microservices giúp hệ thống linh hoạt, dễ mở rộng và dễ bảo trì hơn. Bài viết cũng hướng dẫn các bước khởi tạo môi trường, tổ chức pipeline xử lý dữ liệu, và đảm bảo tuân thủ các tiêu chuẩn bảo mật & quyền riêng tư như HIPAA.
-###  [Blog 2 - ...](3.2-Blog2/)
-Blog này giới thiệu cách bắt đầu xây dựng data lake trong lĩnh vực y tế bằng cách áp dụng kiến trúc microservices. Bạn sẽ tìm hiểu vì sao data lake quan trọng trong việc lưu trữ và phân tích dữ liệu y tế đa dạng (hồ sơ bệnh án điện tử, dữ liệu xét nghiệm, thiết bị IoT y tế…), cách microservices giúp hệ thống linh hoạt, dễ mở rộng và dễ bảo trì hơn. Bài viết cũng hướng dẫn các bước khởi tạo môi trường, tổ chức pipeline xử lý dữ liệu, và đảm bảo tuân thủ các tiêu chuẩn bảo mật & quyền riêng tư như HIPAA.
-###  [Blog 3 - ...](3.3-Blog3/)
-Blog này giới thiệu cách bắt đầu xây dựng data lake trong lĩnh vực y tế bằng cách áp dụng kiến trúc microservices. Bạn sẽ tìm hiểu vì sao data lake quan trọng trong việc lưu trữ và phân tích dữ liệu y tế đa dạng (hồ sơ bệnh án điện tử, dữ liệu xét nghiệm, thiết bị IoT y tế…), cách microservices giúp hệ thống linh hoạt, dễ mở rộng và dễ bảo trì hơn. Bài viết cũng hướng dẫn các bước khởi tạo môi trường, tổ chức pipeline xử lý dữ liệu, và đảm bảo tuân thủ các tiêu chuẩn bảo mật & quyền riêng tư như HIPAA.
+Tại đây sẽ là phần liệt kê, giới thiệu các blogs mà các bạn đã dịch:
+
+###  [Blog 1 - Thông báo kết thúc hỗ trợ AWS Tools for PowerShell v4](3.1-Blog1/)
+Blog này thông báo về việc AWS kết thúc hỗ trợ cho AWS Tools for PowerShell v4.x từ ngày 1 tháng 3 năm 2026. Bạn sẽ tìm hiểu về lộ trình kết thúc hỗ trợ, tác động đến các ứng dụng hiện tại, và hướng dẫn di chuyển lên phiên bản 5.x mới với các cải tiến về hiệu suất, tính năng và bảo mật. Blog cũng cung cấp tài liệu tham khảo và khuyến nghị để đảm bảo quá trình nâng cấp diễn ra suôn sẻ.
+
+###  [Blog 2 - Thông báo kết thúc hỗ trợ AWS SDK for .NET v3](3.2-Blog2/)
+Blog này thông báo về việc AWS kết thúc hỗ trợ cho AWS SDK for .NET v3.x từ ngày 1 tháng 3 năm 2026. Bạn sẽ hiểu rõ về ba giai đoạn của lộ trình kết thúc hỗ trợ (phát hành rộng rãi, chế độ bảo trì, kết thúc hỗ trợ), tác động đến ứng dụng hiện tại và hướng dẫn di chuyển lên SDK v4.x. Blog cung cấp các tài liệu tham khảo bao gồm migration guide, development tracker và code examples để hỗ trợ quá trình nâng cấp.
+
+###  [Blog 3 - Cơ chế hoạt động AWS Lambda SnapStart](3.3-Blog3/)
+Blog này giải thích chi tiết cơ chế hoạt động của AWS Lambda SnapStart - tính năng giúp tối ưu hóa độ trễ khởi động của hàm Lambda. Bạn sẽ tìm hiểu về cold start, ba giai đoạn hoạt động của SnapStart (tạo snapshot, lưu trữ với bộ đệm phân tầng, khôi phục thực thi), và các yếu tố ảnh hưởng đến hiệu suất. Blog cũng cung cấp các khuyến nghị để tối ưu hóa hiệu suất ứng dụng khi sử dụng SnapStart cho Java, .NET và Python.

@@ -1,124 +1,85 @@
 ---
-title: "Blog 3"
-date: "2025-09-09"
-weight: 1
+title: "How AWS Lambda SnapStart Works"
+date: "2025-08-19"
+weight: 3
 chapter: false
 pre: " <b> 3.3. </b> "
 ---
 
+# Under the hood: how AWS Lambda SnapStart optimizes function startup latency
 
-# Getting Started with Healthcare Data Lakes: Using Microservices
+*By Ayush Kulkarni and Eric Heinz | August 19, 2025*
 
-Data lakes can help hospitals and healthcare facilities turn data into business insights, maintain business continuity, and protect patient privacy. A **data lake** is a centralized, managed, and secure repository to store all your data, both in its raw and processed forms for analysis. Data lakes allow you to break down data silos and combine different types of analytics to gain insights and make better business decisions.
+When building applications with AWS Lambda, optimizing function startup is an important step to improve performance for latency-sensitive applications. The largest contributor to startup latency (often called cold start time) is the time Lambda spends initializing your function code. Lambda SnapStart is a feature available for Java, Python, and .NET runtimes that reduces cold start latency from seconds (or higher) to sub-second levels. SnapStart typically requires no or minimal changes to your application code and makes it easier to build responsive and scalable applications without implementing complex performance optimizations.
 
-This blog post is part of a larger series on getting started with setting up a healthcare data lake. In my final post of the series, *“Getting Started with Healthcare Data Lakes: Diving into Amazon Cognito”*, I focused on the specifics of using Amazon Cognito and Attribute Based Access Control (ABAC) to authenticate and authorize users in the healthcare data lake solution. In this blog, I detail how the solution evolved at a foundational level, including the design decisions I made and the additional features used. You can access the code samples for the solution in this Git repo for reference.
+If your function already initializes within a few hundred milliseconds, then AWS recommends using Lambda Provisioned Concurrency to achieve startup latency in the tens of milliseconds.
 
----
+## What is cold start?
 
-## Architecture Guidance
+Lambda runs your function code in an isolated, secure execution environment using Firecracker microVM technology. When you invoke a Lambda function for the first time, Lambda creates a new execution environment for that function to run. Lambda downloads your function code, starts the language runtime environment, and runs the function's initialization code (the code outside the handler). This initialization process (INIT) is called a cold start. Lambda then runs the function's handler code to execute the invocation. The following figure shows the lifecycle of a typical function invocation.
 
-The main change since the last presentation of the overall architecture is the decomposition of a single service into a set of smaller services to improve maintainability and flexibility. Integrating a large volume of diverse healthcare data often requires specialized connectors for each format; by keeping them encapsulated separately as microservices, we can add, remove, and modify each connector without affecting the others. The microservices are loosely coupled via publish/subscribe messaging centered in what I call the “pub/sub hub.”
+![Figure 1. Function invocation lifecycle without SnapStart](/images/3-BlogsTranslated/3.3-Blog3/figure1.png)
 
-This solution represents what I would consider another reasonable sprint iteration from my last post. The scope is still limited to the ingestion and basic parsing of **HL7v2 messages** formatted in **Encoding Rules 7 (ER7)** through a REST interface.
+A Lambda execution environment only processes one function invocation at a time. After the function finishes running, Lambda doesn't immediately stop the execution environment. When your function receives another invocation request, Lambda will attempt to route that request to an idle but already running execution environment. Since the INIT process has already been run for this execution environment, this invocation is called a warm start.
 
-**The solution architecture is now as follows:**
+The final step of cold start, function code initialization, typically takes the most time. This depends on the startup tasks you perform in your code and the language runtime or framework you use. For languages like Java and .NET, startup latency is affected by just-in-time compilation of static code in loaded classes. For Python, it can be affected if your executed code contains many or large modules.
 
-> *Figure 1. Overall architecture; colored boxes represent distinct services.*
+## Phase 1: Creating a snapshot for your Lambda function
 
----
+When using SnapStart, the Lambda execution environment lifecycle changes. When you enable SnapStart for a specific function, publishing a new function version triggers the snapshot creation process. This process runs the function initialization phase and creates an immutable, encrypted Firecracker microVM snapshot of the initialized execution environment's memory and disk state, then caches and chunks that snapshot for reuse.
 
-While the term *microservices* has some inherent ambiguity, certain traits are common:  
-- Small, autonomous, loosely coupled  
-- Reusable, communicating through well-defined interfaces  
-- Specialized to do one thing well  
-- Often implemented in an **event-driven architecture**
+Code branches not executed during initialization, such as classes loaded on-demand through dependency injection, will not be included in the function's snapshot. To improve snapshot effectiveness, proactively execute code branches during the initialization phase, or use runtime hooks to run code before Lambda creates the snapshot.
 
-When determining where to draw boundaries between microservices, consider:  
-- **Intrinsic**: technology used, performance, reliability, scalability  
-- **Extrinsic**: dependent functionality, rate of change, reusability  
-- **Human**: team ownership, managing *cognitive load*
+Snapshot creation can take several minutes, during which your function version will be in PENDING state, and transitions to ACTIVE when the snapshot is ready.
 
----
+When you invoke your function subsequently, Lambda will restore new execution environments from this snapshot. This optimization makes function invocation faster and more predictable, as creating a new execution environment no longer requires the initialization process.
 
-## Technology Choices and Communication Scope
+![Figure 2. Function invocation lifecycle with SnapStart](/images/3-BlogsTranslated/3.3-Blog3/figure2.png)
 
-| Communication scope                       | Technologies / patterns to consider                                                        |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Within a single microservice              | Amazon Simple Queue Service (Amazon SQS), AWS Step Functions                               |
-| Between microservices in a single service | AWS CloudFormation cross-stack references, Amazon Simple Notification Service (Amazon SNS) |
-| Between services                          | Amazon EventBridge, AWS Cloud Map, Amazon API Gateway                                      |
+## Phase 2: Storing snapshots for low-latency retrieval at Lambda scale
 
----
+Lambda operates at large scale, processing tens of billions of function invocations each month. To efficiently manage and retrieve snapshots at this volume of traffic, Lambda uses storage and caching components. These components include three tiers: Amazon S3 for durable storage, a dedicated distributed cache, and a local cache on Lambda worker nodes.
 
-## The Pub/Sub Hub
+Lambda stores function snapshots in Amazon S3, chunking them into 512 KB pieces to optimize retrieval latency. Retrieval latency from Amazon S3 can take up to hundreds of milliseconds per 512 KB chunk. Therefore, Lambda uses a two-tier cache to accelerate snapshot retrieval.
 
-Using a **hub-and-spoke** architecture (or message broker) works well with a small number of tightly related microservices.  
-- Each microservice depends only on the *hub*  
-- Inter-microservice connections are limited to the contents of the published message  
-- Reduces the number of synchronous calls since pub/sub is a one-way asynchronous *push*
+When you enable SnapStart, during optimization, Lambda will store snapshot chunks in a layer-two (L2 cache). This tier is a cluster of dedicated distributed cache instances built by Lambda. Lambda stores a separate copy of each snapshot for each AWS Availability Zone (AZ).
 
-Drawback: **coordination and monitoring** are needed to avoid microservices processing the wrong message.
+Lambda also maintains a layer-one (L1 cache) located on Lambda worker nodes, which are Amazon EC2 instances that process function invocations. This tier is locally available, so it provides the fastest performance, typically 1 millisecond for a 512 KB chunk. Functions with more frequent invocations are more likely to have their snapshot chunks stored in this tier.
 
----
+![Figure 3. SnapStart tiered caching](/images/3-BlogsTranslated/3.3-Blog3/figure3.png)
 
-## Core Microservice
+## Phase 3: Resuming execution from restored snapshots
 
-Provides foundational data and communication layer, including:  
-- **Amazon S3** bucket for data  
-- **Amazon DynamoDB** for data catalog  
-- **AWS Lambda** to write messages into the data lake and catalog  
-- **Amazon SNS** topic as the *hub*  
-- **Amazon S3** bucket for artifacts such as Lambda code
+Resuming execution from snapshots with low latency is the final phase of SnapStart. This phase involves loading the retrieved snapshot chunks into your function's execution environment. Typically, only a small portion of the retrieved snapshot is needed to serve an invocation.
 
-> Only allow indirect write access to the data lake through a Lambda function → ensures consistency.
+Storing snapshots as chunks allows Lambda to optimize the resumption process by proactively loading only the small subset of chunks needed. To do this, Lambda tracks and records the snapshot chunks that the function accesses during each invocation, as shown in the following figure.
 
----
+![Figure 4. Initial invocation, recording chunk access pattern](/images/3-BlogsTranslated/3.3-Blog3/figure4.png)
 
-## Front Door Microservice
+After the first function invocation, Lambda references this recorded chunk access data for subsequent invocations, as shown in the following figure. Lambda proactively retrieves and loads the "working set" of these chunks before they are needed for execution. This significantly accelerates cold-start latency.
 
-- Provides an API Gateway for external REST interaction  
-- Authentication & authorization based on **OIDC** via **Amazon Cognito**  
-- Self-managed *deduplication* mechanism using DynamoDB instead of SNS FIFO because:  
-  1. SNS deduplication TTL is only 5 minutes  
-  2. SNS FIFO requires SQS FIFO  
-  3. Ability to proactively notify the sender that the message is a duplicate  
+![Figure 5. Subsequent invocation, loading chunks in access order](/images/3-BlogsTranslated/3.3-Blog3/figure5.png)
 
----
+## Understanding SnapStart function performance
 
-## Staging ER7 Microservice
+### Function performance improves with more invocations
 
-- Lambda “trigger” subscribed to the pub/sub hub, filtering messages by attribute  
-- Step Functions Express Workflow to convert ER7 → JSON  
-- Two Lambdas:  
-  1. Fix ER7 formatting (newline, carriage return)  
-  2. Parsing logic  
-- Result or error is pushed back into the pub/sub hub  
+Functions that are invoked more frequently are more likely to have snapshots stored in the L1 tier cache, which provides the fastest retrieval latency. Portions of snapshots that are less accessed for infrequently invoked functions are less likely to be present in the L1 tier, resulting in slower retrieval latency from L2 cache and S3 tiers.
 
----
+### Preload code branches to optimize snapshot restoration latency
 
-## New Features in the Solution
+To maximize SnapStart benefits, preload dependencies, initialize resources, and perform heavy computational tasks that cause startup latency in your initialization code rather than in the function handler. Code branches not executed during the function's INIT phase will not be included in the function's snapshot.
 
-### 1. AWS CloudFormation Cross-Stack References
-Example *outputs* in the core microservice:
-```yaml
-Outputs:
-  Bucket:
-    Value: !Ref Bucket
-    Export:
-      Name: !Sub ${AWS::StackName}-Bucket
-  ArtifactBucket:
-    Value: !Ref ArtifactBucket
-    Export:
-      Name: !Sub ${AWS::StackName}-ArtifactBucket
-  Topic:
-    Value: !Ref Topic
-    Export:
-      Name: !Sub ${AWS::StackName}-Topic
-  Catalog:
-    Value: !Ref Catalog
-    Export:
-      Name: !Sub ${AWS::StackName}-Catalog
-  CatalogArn:
-    Value: !GetAtt Catalog.Arn
-    Export:
-      Name: !Sub ${AWS::StackName}-CatalogArn
+### Performance varies depending on function size
+
+SnapStart performance depends on how quickly Lambda can retrieve and load cached snapshots into your function's execution environment. Larger function sizes increase snapshot size, and therefore increase the number of chunks, which causes performance to vary for functions of different sizes.
+
+### Not all functions benefit from SnapStart
+
+SnapStart is designed to improve startup latency when function initialization takes several seconds, due to language-specific factors or due to initializing and loading software dependencies and frameworks. If your function initializes within a few hundred milliseconds, you are unlikely to see significant performance improvement with SnapStart. For these cases, we recommend using Provisioned Concurrency.
+
+## Conclusion
+
+AWS Lambda SnapStart can deliver sub-second startup performance for Java, .NET, and Python functions with long initialization times. This post explored how Lambda's lifecycle changes with SnapStart and how Lambda efficiently stores and loads snapshots to improve startup performance. SnapStart helps developers build responsive and scalable applications without provisioning resources or implementing complex performance optimizations.
+
+To learn more about SnapStart, refer to the documentation and launch posts for Java, Python and .NET. For performance tuning, refer to SnapStart best practices for your preferred language runtime.

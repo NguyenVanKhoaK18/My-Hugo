@@ -6,18 +6,15 @@ chapter: false
 pre: " <b> 3. </b> "
 ---
 
-{{% notice warning %}}
-⚠️ **Note:** The information below is for reference purposes only. Please **do not copy verbatim** for your own report, including this warning.
-{{% /notice %}}
 
-This section will list and introduce the blogs you have translated. For example:
 
-###  [Blog 1 - Getting started with healthcare data lakes: Using microservices](3.1-Blog1/)
-This blog introduces how to start building a data lake in the healthcare sector by applying a microservices architecture. You will learn why data lakes are important for storing and analyzing diverse healthcare data (electronic medical records, lab test data, medical IoT devices…), how microservices help make the system more flexible, scalable, and easier to maintain. The article also guides you through the steps to set up the environment, organize the data processing pipeline, and ensure compliance with security & privacy standards such as HIPAA.
+Here is the list and introduction of the blogs that have been translated:
 
-###  [Blog 2 - ...](3.2-Blog2/)
-This blog introduces how to start building a data lake in the healthcare sector by applying a microservices architecture. You will learn why data lakes are important for storing and analyzing diverse healthcare data (electronic medical records, lab test data, medical IoT devices…), how microservices help make the system more flexible, scalable, and easier to maintain. The article also guides you through the steps to set up the environment, organize the data processing pipeline, and ensure compliance with security & privacy standards such as HIPAA.
+###  [Blog 1 - AWS Tools for PowerShell v4 End-of-Support Announcement](3.1-Blog1/)
+This blog announces AWS's end-of-support for AWS Tools for PowerShell v4.x starting March 1, 2026. You will learn about the end-of-support roadmap, impact on existing applications, and migration guidance to the new version 5.x with improvements in performance, features, and security. The blog also provides reference documentation and recommendations to ensure a smooth upgrade process.
 
-###  [Blog 3 - ...](3.3-Blog3/)
-This blog introduces how to start building a data lake in the healthcare sector by applying a microservices architecture. You will learn why data lakes are important for storing and analyzing diverse healthcare data (electronic medical records, lab test data, medical IoT devices…), how microservices help make the system more flexible, scalable, and easier to maintain. The article also guides you through the steps to set up the environment, organize the data processing pipeline, and ensure compliance with security & privacy standards such as HIPAA.
+###  [Blog 2 - AWS SDK for .NET v3 End-of-Support Announcement](3.2-Blog2/)
+This blog announces AWS's end-of-support for AWS SDK for .NET v3.x starting March 1, 2026. You will understand the three phases of the end-of-support roadmap (general availability, maintenance mode, end-of-support), impact on existing applications, and migration guidance to SDK v4.x. The blog provides reference materials including migration guide, development tracker, and code examples to support the upgrade process.
 
+###  [Blog 3 - How AWS Lambda SnapStart Works](3.3-Blog3/)
+This blog explains in detail how AWS Lambda SnapStart works - a feature that helps optimize Lambda function startup latency. You will learn about cold starts, the three operational phases of SnapStart (creating snapshots, storage with tiered caching, resume execution), and factors affecting performance. The blog also provides recommendations for optimizing application performance when using SnapStart for Java, .NET, and Python.
